@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:inventory="http://www.mulesoft.org/schema/mule/inventory" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
-http://www.mulesoft.org/schema/mule/inventory http://www.mulesoft.org/schema/mule/inventory/current/mule-inventory.xsd">
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:inventory="http://www.mulesoft.org/schema/mule/inventory" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/inventory http://www.mulesoft.org/schema/mule/inventory/current/mule-inventory.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
     <http:listener-config name="inventory-process-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
@@ -126,13 +127,20 @@ output application/json
         </error-handler>
     </flow>
     <flow name="delete:\products:application\json:inventory-process-api-config">
-        <inventory:delete-inventories doc:name="Delete inventories" doc:id="33d5ac65-810a-485f-88fd-302845f4537e" config-ref="Inventory_Config">
-			<inventory:delete-inventories-request-data ><![CDATA[#[{
+        <ee:transform doc:name="Transform Message" doc:id="26328315-f1f0-4a14-98bb-b7f1109e112d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
     count : payload.count,
     description : payload.description,
-    productCode : payload.code,
+    productCode : payload.productCode,
     size: payload.size
-}]]]></inventory:delete-inventories-request-data>
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<inventory:delete-inventories doc:name="Delete inventories" doc:id="33d5ac65-810a-485f-88fd-302845f4537e" config-ref="Inventory_Config">
 		</inventory:delete-inventories>
 		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="Map response">
             <ee:message>
@@ -157,13 +165,21 @@ payload]]></ee:set-payload>
         </ee:transform>
     </flow>
     <flow name="post:\products:application\json:inventory-process-api-config">
-        <inventory:create-inventory doc:name="Create inventory" doc:id="1dd45952-1a2d-4e8e-8279-f1d39e4d2783" config-ref="Inventory_Config">
-			<inventory:create-inventory-request-data ><![CDATA[#[{
+        <ee:transform doc:name="Map Create inventory fields" doc:id="b6b713d6-2e3d-4088-afed-b824158acbef" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
     count : payload.count,
     description : payload.description,
-    productCode : payload.code,
+    productCode : payload.productCode,
     size: payload.size
-}]]]></inventory:create-inventory-request-data>
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="29327892-09f9-41f2-a8df-8b012789ea9c" message="#[payload]"/>
+		<inventory:create-inventory doc:name="Create inventory" doc:id="1dd45952-1a2d-4e8e-8279-f1d39e4d2783" config-ref="Inventory_Config">
 		</inventory:create-inventory>
 		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="Map response">
             <ee:message>
